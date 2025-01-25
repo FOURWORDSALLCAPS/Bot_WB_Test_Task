@@ -1,0 +1,78 @@
+services:
+  nginx:
+    container_name: nginx
+    hostname: nginx
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    networks:
+      - botnet
+
+  app:
+    container_name: app
+    hostname: app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - "8900:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - botnet
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:15.6-bullseye
+    environment:
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: postgres_database
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5445:5432"
+    volumes:
+      - ./postgres/migrations:/docker-entrypoint-initdb.d
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_database" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - botnet
+
+  tg_bot:
+    container_name: tg_bot
+    hostname: tg_bot
+    build:
+      context: .
+      dockerfile: tg_bot/Dockerfile
+    restart: on-failure
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - botnet
+
+
+volumes:
+  postgres:
+
+networks:
+  botnet:
+    name: bot
+    driver: bridge

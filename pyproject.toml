@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "bot_wb_test_task"
+version = "0.1.0"
+authors = ["FOURWORDSALLCAPS"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "3.13.1"
+asyncpg = "0.30.0"
+fastapi = { extras = ["all"], version = "0.115.2" }
+uvicorn = { extras = ["standard"], version = "0.34.0" }
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.29" }
+aiohttp = "3.11.11"
+aiogram = "3.17.0"
+rodi = "2.0.6"
+APScheduler = "3.11.0"

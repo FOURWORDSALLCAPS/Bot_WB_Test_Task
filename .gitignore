@@ -1,0 +1,8 @@
+media/
+.idea/
+__pycache__
+.env
+.venv
+venv
+tmp*
+.DS_Store
