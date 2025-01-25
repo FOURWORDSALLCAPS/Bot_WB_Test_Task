@@ -23,6 +23,8 @@ services:
       - .env
     ports:
       - "8900:8000"
+    volumes:
+      - ./scheduled_jobs:/usr/src/app/scheduled_jobs
     depends_on:
       postgres:
         condition: service_healthy

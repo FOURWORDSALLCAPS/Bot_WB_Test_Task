@@ -10,6 +10,7 @@ from app.dependencies import container
 from app.engines import PostgresEngine, WBApiClientEngine
 from app.repositories import WildberriesRepository
 from app.routers import router
+from app.services import WBProductService
 from app.settings import settings
 
 
@@ -20,13 +21,13 @@ def init_container(scheduler: AsyncIOScheduler) -> None:
     container.add_scoped(WildberriesRepository)
     container.add_instance(scheduler)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa
     scheduler = AsyncIOScheduler()
     scheduler.start()
     init_container(scheduler)
 
+    WBProductService()
     yield
 
     scheduler.shutdown()

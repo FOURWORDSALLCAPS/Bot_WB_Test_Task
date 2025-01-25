@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 
 from apscheduler.triggers.interval import IntervalTrigger
@@ -15,6 +16,7 @@ class WBProductService:
     def __init__(self):
         self.wildberries_repository: WildberriesRepository = container.resolve(WildberriesRepository)
         self.scheduler: AsyncIOScheduler = container.resolve(AsyncIOScheduler)
+        self.load_scheduled_jobs()
 
     async def get_wildberries_products(
         self,
@@ -36,9 +38,12 @@ class WBProductService:
     ):
         article = search_params.article
         await self.__fetch_products_by_article(article)
+
+        self.__save_job(article)
+
         self.scheduler.add_job(
             self.__scheduled_task,
-            trigger=IntervalTrigger(minutes=1),
+            trigger=IntervalTrigger(minutes=30),
             args=[article],
             id=f'subscribe_{article}',
             replace_existing=True
@@ -48,6 +53,25 @@ class WBProductService:
     async def __scheduled_task(self, article: str):
         products = await self.__fetch_products_by_article(article)
         await self.__create_product_from_db(products, article)
+
+    def load_scheduled_jobs(self):
+        with open('/usr/src/app/scheduled_jobs/scheduled_jobs.json', 'r') as f:
+            for line in f:
+                job_info = json.loads(line)
+                article = job_info.get('article')
+                self.scheduler.add_job(
+                    self.__scheduled_task,
+                    trigger=IntervalTrigger(minutes=1),
+                    args=[article],
+                    id=f'subscribe_{article}',
+                    replace_existing=True
+                )
+
+    @staticmethod
+    def __save_job(article: str):
+        with open('/usr/src/app/scheduled_jobs/scheduled_jobs.json', 'a') as file:
+            json.dump({"article": article}, file)
+            file.write('\n')
 
     @staticmethod
     async def __fetch_products_by_article(article: str) -> list:
